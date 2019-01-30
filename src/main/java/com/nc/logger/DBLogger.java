@@ -1,77 +1,117 @@
 package com.nc.logger;
 
 import java.sql.*;
-import java.sql.Date;
 import java.util.Calendar;
 
-public class DBLogger  implements Logger{
+public class DBLogger implements Logger {
+    private static final String INSERT_LOG = "insert into \"Log\"(level_id, app_id, message, class, date,thread) values (?,?,?,?,?,?)";
+    private static final String INSERT_APP = "insert into \"App\"(name) values (?)";
+    private static final String SELECT_LEVEL = "select id from \"Level\" where name = ?";
+    private static final String SELECT_APP = "select id from \"App\" where name = ?";
+
     private final Class logClass;
-
-    private static final String URL = "jdbc:postgresql://localhost:5432/LogDB";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "1703";
-
-    private static final String INSERT = "insert into \"Log\"(level_id, app_id, message, class, date,thread) values (?,?,?,?,?,?)";
-    private static final String SELECT = "select id from \"Level\" where name = ?";
+    private final Level threshold;
+    private int appId;
 
     private Connection connection;
-    private PreparedStatement insertPreparedStatement;
-    private PreparedStatement selectPreparedStatement;
+    private PreparedStatement insertLogPreparedStatement;
+    private PreparedStatement selectLevelPreparedStatement;
+    private PreparedStatement selectAppPreparedStatement;
+    private PreparedStatement insertAppPreparedStatement;
 
-    public DBLogger(Class<?> clazz){
+
+    public DBLogger(Class<?> clazz, String URL, String USER, String PASSWORD, String appName, String threshold) {
         logClass = clazz;
+        this.threshold = Level.valueOf(threshold);
+
         try {
             connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            insertPreparedStatement = connection.prepareStatement(INSERT);
-            selectPreparedStatement = connection.prepareStatement(SELECT);
+
+            insertLogPreparedStatement = connection.prepareStatement(INSERT_LOG);
+            selectLevelPreparedStatement = connection.prepareStatement(SELECT_LEVEL);
+            selectAppPreparedStatement = connection.prepareStatement(SELECT_APP);
+            insertAppPreparedStatement = connection.prepareStatement(INSERT_APP);
+            appId = selectAppId(appName);
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
+    private int selectAppId(String appName) {
+        try {
+            selectAppPreparedStatement.setString(1, appName);
+            ResultSet resultSet = selectAppPreparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+            insertAppPreparedStatement.setString(1, appName);
+            insertAppPreparedStatement.execute();
+
+            selectAppPreparedStatement.setString(1, appName);
+            ResultSet resultSetNew = selectAppPreparedStatement.executeQuery();
+            if (resultSetNew.next()) {
+                return resultSetNew.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public void debug(String msg) {
-        Date date = new Date(Calendar.getInstance().getTimeInMillis());
-        preparedStatementExecute(Level.DEBUG, msg,date);
+        if (Level.DEBUG.ordinal() >= threshold.ordinal()) {
+            Date date = new Date(Calendar.getInstance().getTimeInMillis());
+            preparedStatementExecute(Level.DEBUG, msg, date);
+        } else return;
     }
 
     public void info(String msg) {
-        Date date = new Date(Calendar.getInstance().getTimeInMillis());
-        preparedStatementExecute(Level.INFO, msg,date);
-    }
-
-    public void error(String msg) {
-        Date date = new Date(Calendar.getInstance().getTimeInMillis());
-        preparedStatementExecute(Level.ERROR, msg,date);
+        if (Level.INFO.ordinal() >= threshold.ordinal()) {
+            Date date = new Date(Calendar.getInstance().getTimeInMillis());
+            preparedStatementExecute(Level.INFO, msg, date);
+        } else return;
     }
 
     public void warn(String msg) {
-        Date date = new Date(Calendar.getInstance().getTimeInMillis());
-        preparedStatementExecute(Level.WARNING, msg,date);
+        if (Level.WARNING.ordinal() >= threshold.ordinal()) {
+            Date date = new Date(Calendar.getInstance().getTimeInMillis());
+            preparedStatementExecute(Level.WARNING, msg, date);
+        } else return;
+    }
+
+    public void error(String msg) {
+        if (Level.ERROR.ordinal() >= threshold.ordinal()) {
+            Date date = new Date(Calendar.getInstance().getTimeInMillis());
+            preparedStatementExecute(Level.ERROR, msg, date);
+        } else return;
     }
 
     public void fatal(String msg) {
-        Date date = new Date(Calendar.getInstance().getTimeInMillis());
-        preparedStatementExecute(Level.FATAL, msg,date);
+        if (Level.FATAL.ordinal() >= threshold.ordinal()) {
+            Date date = new Date(Calendar.getInstance().getTimeInMillis());
+            preparedStatementExecute(Level.FATAL, msg, date);
+        } else return;
     }
 
-    private void preparedStatementExecute(Level level, String msg,Date date) {
+    private void preparedStatementExecute(Level level, String msg, Date date) {
         try {
-            selectPreparedStatement.setString(1, level.name());
-            ResultSet resultSet = selectPreparedStatement.executeQuery();
+            selectLevelPreparedStatement.setString(1, level.name());
+            ResultSet resultSet = selectLevelPreparedStatement.executeQuery();
             if (resultSet.next()) {
                 int level_id = resultSet.getInt(1);
-                insertPreparedStatement.setInt(1, level_id);
+                insertLogPreparedStatement.setInt(1, level_id);
             }
+            insertLogPreparedStatement.setInt(2, appId);
+            insertLogPreparedStatement.setString(3, msg);
+            insertLogPreparedStatement.setString(4, String.valueOf(logClass));
+            insertLogPreparedStatement.setDate(5, date);
+            insertLogPreparedStatement.setString(6, Thread.currentThread().getName());
 
-            insertPreparedStatement.setInt(2, 1);
-            insertPreparedStatement.setString(3, msg);
-            insertPreparedStatement.setString(4, String.valueOf(logClass));
-            insertPreparedStatement.setDate(5, date);
-            insertPreparedStatement.setString(6,Thread.currentThread().getName());
-            insertPreparedStatement.execute();
+            insertLogPreparedStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        System.out.println(new Date(Calendar.getInstance().getTimeInMillis()) + " "
-                + logClass.getCanonicalName() + "\n"+level.name()+": " + msg);
+
     }
 }

@@ -1,12 +1,11 @@
 package com.nc.logger;
 
 public class ClassC {
-    private static final Logger log = new DBLogger(ClassC.class);
+    private static final Logger log = MyLoggerFactory.getLogger(ClassC.class);
 
     public void methodClassC(){
-        log.debug("ClassC");
+        log.info("ClassC");
         ClassA a = new ClassA();
         a.methodClassA();
-        System.out.println("ClassC");
     }
 }
