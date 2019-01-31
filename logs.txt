@@ -55,3 +55,27 @@ INFO: ClassC
 2019-01-30 com.nc.logger.Main   Thread: main
 INFO: info
 
+2019-01-31 com.nc.logger.ClassB   Thread: main
+FATAL: ClassB
+
+2019-01-31 com.nc.logger.ClassC   Thread: main
+INFO: ClassC
+
+2019-01-31 com.nc.logger.ClassA   Thread: main
+DEBUG: ClassA
+
+2019-01-31 com.nc.logger.Main   Thread: main
+INFO: info
+
+2019-01-31 com.nc.logger.Main   Thread: main
+DEBUG: debug
+
+2019-01-31 com.nc.logger.ClassB   Thread: main
+FATAL: ClassB
+
+2019-01-31 com.nc.logger.ClassC   Thread: main
+INFO: ClassC
+
+2019-01-31 com.nc.logger.Main   Thread: main
+INFO: info
+

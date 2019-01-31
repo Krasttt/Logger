@@ -4,7 +4,8 @@ import java.sql.*;
 import java.util.Calendar;
 
 public class DBLogger implements Logger {
-    private static final String INSERT_LOG = "insert into \"Log\"(level_id, app_id, message, class, date,thread) values (?,?,?,?,?,?)";
+    private static final String INSERT_LOG = "insert into \"Log\"(level_id, app_id, message, class, date,thread)" +
+            " values (?,?,?,?,?,?)";
     private static final String INSERT_APP = "insert into \"App\"(name) values (?)";
     private static final String SELECT_LEVEL = "select id from \"Level\" where name = ?";
     private static final String SELECT_APP = "select id from \"App\" where name = ?";
@@ -13,33 +14,20 @@ public class DBLogger implements Logger {
     private final Level threshold;
     private int appId;
 
-    private Connection connection;
-    private PreparedStatement insertLogPreparedStatement;
-    private PreparedStatement selectLevelPreparedStatement;
-    private PreparedStatement selectAppPreparedStatement;
-    private PreparedStatement insertAppPreparedStatement;
+    private static ConnectionPool connectionPool = new ConnectionPool();
 
-
-    public DBLogger(Class<?> clazz, String URL, String USER, String PASSWORD, String appName, String threshold) {
+    public DBLogger(Class<?> clazz,String appName, String threshold) {
         logClass = clazz;
         this.threshold = Level.valueOf(threshold);
+        appId = selectAppId(appName);
 
-        try {
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
-
-            insertLogPreparedStatement = connection.prepareStatement(INSERT_LOG);
-            selectLevelPreparedStatement = connection.prepareStatement(SELECT_LEVEL);
-            selectAppPreparedStatement = connection.prepareStatement(SELECT_APP);
-            insertAppPreparedStatement = connection.prepareStatement(INSERT_APP);
-            appId = selectAppId(appName);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     private int selectAppId(String appName) {
-        try {
+        try (Connection db = connectionPool.getConnection();
+             PreparedStatement selectAppPreparedStatement = db.prepareStatement(SELECT_APP);
+             PreparedStatement insertAppPreparedStatement = db.prepareStatement(INSERT_APP)){
+
             selectAppPreparedStatement.setString(1, appName);
             ResultSet resultSet = selectAppPreparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -95,7 +83,10 @@ public class DBLogger implements Logger {
     }
 
     private void preparedStatementExecute(Level level, String msg, Date date) {
-        try {
+        try (Connection db = connectionPool.getConnection();
+             PreparedStatement selectLevelPreparedStatement = db.prepareStatement(SELECT_LEVEL);
+             PreparedStatement insertLogPreparedStatement = db.prepareStatement(INSERT_LOG)) {
+
             selectLevelPreparedStatement.setString(1, level.name());
             ResultSet resultSet = selectLevelPreparedStatement.executeQuery();
             if (resultSet.next()) {

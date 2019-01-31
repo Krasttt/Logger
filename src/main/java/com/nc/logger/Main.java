@@ -1,12 +1,9 @@
 package com.nc.logger;
 
-import java.io.IOException;
-
 public class Main {
     private static final Logger log = MyLoggerFactory.getLogger(Main.class);
 
-
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         ClassB b = new ClassB();
         b.methodClassB();
         someMethod1();

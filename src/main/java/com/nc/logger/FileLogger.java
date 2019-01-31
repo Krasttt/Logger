@@ -82,7 +82,8 @@ public class FileLogger implements Logger {
     private void write(Level level, String msg, Date date) {
         try {
             writer.append(date + " "
-                    + logClass.getCanonicalName() + "   Thread: " + Thread.currentThread().getName() + "\n" + level.name() + ": " + msg + "\n\n");
+                    + logClass.getCanonicalName() + "   Thread: " + Thread.currentThread().getName() +
+                    "\n" + level.name() + ": " + msg + "\n\n");
             writer.flush();
         } catch (IOException e) {
             e.printStackTrace();
