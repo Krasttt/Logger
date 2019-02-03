@@ -54,7 +54,7 @@ public class ConsoleLogger implements Logger {
     }
 
     private void print(Level level, String msg, Date date) {
-        System.out.println(date + " "
+        System.out.println(date.getTime() + " "
                 + logClass.getCanonicalName() + "   Thread: " + Thread.currentThread().getName() +
                 "\n" + level.name() + ": " + msg + "\n");
     }

@@ -7,15 +7,20 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 public class ConnectionPool {
+    private static ConnectionPool instance = new ConnectionPool();
     private HikariConfig conf;
     private HikariDataSource dataSource;
 
-    public ConnectionPool(){
+    private ConnectionPool(){
         conf = new HikariConfig();
         conf.setJdbcUrl(ConfigReader.getProperty("url"));
         conf.setUsername(ConfigReader.getProperty("user"));
         conf.setPassword(ConfigReader.getProperty("password"));
         dataSource = new HikariDataSource(conf);
+    }
+
+    public static ConnectionPool getInstance(){
+        return instance;
     }
 
     public Connection getConnection(){
