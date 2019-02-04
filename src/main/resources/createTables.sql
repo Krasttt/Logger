@@ -1,3 +1,4 @@
+CREATE SEQUENCE "App_id_seq";
 CREATE TABLE "App"
 (
     id integer NOT NULL DEFAULT nextval('"App_id_seq"'::regclass),
@@ -5,6 +6,7 @@ CREATE TABLE "App"
     CONSTRAINT "App_pkey" PRIMARY KEY (id)
 );
 
+CREATE SEQUENCE "Level_id_seq";
 CREATE TABLE "Level"
 (
     id integer NOT NULL DEFAULT nextval('"Level_id_seq"'::regclass),
@@ -12,6 +14,7 @@ CREATE TABLE "Level"
     CONSTRAINT "Level_pkey" PRIMARY KEY (id)
 );
 
+CREATE SEQUENCE "Log_id_seq";
 CREATE TABLE "Log"
 (
     id integer NOT NULL DEFAULT nextval('"Log_id_seq"'::regclass),
